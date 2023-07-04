@@ -1,39 +1,37 @@
-#include <stdio.h>
-#include <stdlib.h>
+#include <errno.h>
 
+#include "defs.h"
 #define extern_ 
 #include "data.h"
 
-#include "defs.h"
+#include "decl.h"
 
-extern int scan(struct token* t);
+static void init() {
+	Line = 1;
+	Putback = '\n';
+}
 
-// List of printable tokens
-char* tokstr[] = { "+", "-", "*", "/", "intlit" };
-
-// loop scanning in all the tokens in the input file
-// print out details of each token found.
-static void scanfile() {
-	struct token T;
-	
-	while (scan(&T)) {
-		printf("Token %s", tokstr[T.token]);
-		if (T.token == T_INTLIT)
-			printf(", value %d", T.intvalue);
-		printf("\n");
-	}
+static void usage(char* prog) {
+	fprintf(stderr, "Usage: %s infile\n", prog);
+	exit(1);
 }
 
 int main(int argc, char* argv[]) {
-	if (argc < 2) {
-		printf("usage: %s <input>\n", argv[0]);
-		exit(1);
+	struct ASTnode* n;
+
+	if (argc != 2) {
+		usage(argv[0]);
 	}
 	
-	//init();
-	Infile = fopen(argv[1], "r");
+	init();
+	if ((Infile = fopen(argv[1], "r")) == NULL) {
+		fprintf(stderr, "Unable to open %s: %s\n", argv[1], strerror(errno));
+		exit(1);
+	}
 
-	scanfile();
+	scan(&Token);
+	n = binexpr();
+	printf("%d\n", interpretAST(n));
 
 	fclose(Infile);
 	return 0;
