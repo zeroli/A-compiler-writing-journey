@@ -1,7 +1,7 @@
 #include <errno.h>
 
 #include "defs.h"
-#define extern_ 
+#define extern_
 #include "data.h"
 
 #include "decl.h"
@@ -22,7 +22,7 @@ int main(int argc, char* argv[]) {
 	if (argc != 2) {
 		usage(argv[0]);
 	}
-	
+
 	init();
 	if ((Infile = fopen(argv[1], "r")) == NULL) {
 		fprintf(stderr, "Unable to open %s: %s\n", argv[1], strerror(errno));
@@ -30,7 +30,7 @@ int main(int argc, char* argv[]) {
 	}
 
 	scan(&Token);
-	n = binexpr();
+	n = binexpr(0);
 	printf("%d\n", interpretAST(n));
 
 	fclose(Infile);

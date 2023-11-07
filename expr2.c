@@ -60,42 +60,53 @@ static struct ASTnode* primary(void) {
 	}
 }
 
+static struct ASTnode* multiplicative_expr()
+{
+    struct ASTnode* left, *right;
+    int tokentype;
+
+    left = primary();
+
+    tokentype = Token.token;
+    if (tokentype == T_EOF)
+        return left;
+
+    while ((tokentype == T_STAR) || (tokentype == T_SLASH)) {
+        scan(&Token);
+        right = primary();
+
+        left = mkastnode(arithop(tokentype), left, right, 0);
+        tokentype = Token.token;
+        if (tokentype == T_EOF)
+            break;
+    }
+
+    return left;
+}
+
+static struct ASTnode* additive_expr()
+{
+    struct ASTnode* left, *right;
+    int tokentype;
+
+    left = multiplicative_expr();
+    tokentype = Token.token;
+    if (tokentype == T_EOF)
+        return left;
+
+    while ((tokentype == T_PLUS) || (tokentype == T_MINUS)) {
+        scan(&Token);
+        right = multiplicative_expr();
+        left = mkastnode(arithop(tokentype), left, right, 0);
+
+        tokentype = Token.token;
+        if (tokentype == T_EOF)
+            break;
+    }
+    return left;
+}
+
 // Return the AST tree whose root is a binary operator
 struct ASTnode* binexpr(int ptp) {
-	struct ASTnode* n, *left, *right;
-	int tokentype;
-
-	// Get the integer literal on the left
-	// fetch the next token at the same time
-	left = primary();
-
-	// if no tokens left, return just the left node
-	tokentype = Token.token;
-	if (tokentype == T_EOF)
-		return (left);
-
-	// while the precedence of this token is
-	// more than that of the previous token precedence
-	while (op_precedence(tokentype) > ptp) {
-		// fetch in the next integer literal
-		scan(&Token);
-
-		// recursively call binexpr() with the
-		// precedence of our token to build a sub-tree
-		right = binexpr(OpPrep[tokentype]);
-
-		// join the sub-tree with ours. convert the token
-		// into an AST operation at the same time
-		left = mkastnode(arithop(tokentype), left, right, 0);
-
-		// update the details of the current token.
-		// if no tokens left, return just the left node
-		tokentype = Token.token;
-		if (tokentype == T_EOF)
-			return left;
-	}
-
-	// return the tree we have when the precedence
-	// is the same or lower
-	return left;
+    return additive_expr();
 }
